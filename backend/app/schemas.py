@@ -25,3 +25,4 @@ class Recommendation(BaseModel):
     id: int
     type: str
     score: float
+    

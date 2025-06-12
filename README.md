@@ -32,6 +32,7 @@ This project demonstrates a minimal end‑to‑end stack for recommending SOFWEE
 git clone https://github.com/vincentlinzhu/sofweek_recommender.git
 cd sofweek_recommender
 cp backend/.env.example backend/.env
+# edit backend/.env to set AGENDA_URL to the real agenda page
 ```
 
 ### Run with Docker
@@ -87,7 +88,16 @@ Returns a list of items sorted by vector similarity.
 
 ## Hourly Scraping
 
-One simple approach is to run the scraper inside a small Docker container with the command scheduled by `cron` (`*/60 * * * *`). Another option is to use a CI/CD pipeline or serverless function triggered hourly.
+The `docker-compose.yml` file includes a `scraper` service that loops every hour:
+
+```yaml
+scraper:
+  build: ./backend
+  command: bash -c "while true; do python -m app.scraper_runner; sleep 3600; done"
+```
+
+This service calls `backend/app/scraper_runner.py` which fetches the agenda and stores new events before updating embeddings.
+You can alternatively schedule `python -m app.scraper_runner` via `cron` if you run outside Docker.
 
 ## Next Steps
 

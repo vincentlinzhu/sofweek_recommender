@@ -1,7 +1,5 @@
-"""Scrape the conference agenda page."""
 import requests
 from bs4 import BeautifulSoup
-
 
 def fetch_agenda(url: str) -> list[dict]:
     resp = requests.get(url)
