@@ -9,7 +9,7 @@ def run() -> None:
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
-        url = os.getenv("AGENDA_URL", "https://example.com/agenda")
+        url = os.getenv("AGENDA_URL", "https://example.com")
         events = fetch_agenda(url)
         for ev in events:
             existing = db.query(Event).filter_by(title=ev.get("title")).first()

@@ -81,7 +81,14 @@ cd sofweek_recommender
 cp backend/.env.example backend/.env
 ```
 
-Edit `backend/.env` to set `AGENDA_URL` to the real agenda page. The file also defines the database URL and embedding model.
+Edit `backend/.env` to set `AGENDA_URL` to the real agenda page. The file also
+defines the database URL and embedding model. When running the backend directly
+without Docker, replace the `db` hostname with `localhost` in `DATABASE_URL`.
+
+```bash
+# inside backend/.env when running locally
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/confrec
+```
 
 ---
 
