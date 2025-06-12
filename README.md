@@ -11,66 +11,123 @@ This project demonstrates a minimal end‑to‑end stack for recommending SOFWEE
 - **React** + **Vite** frontend
 
 ```
-┌─────────────┐        ┌──────────────┐        ┌───────────────────┐
-│  scraper    │  --->  │   database   │  --->  │   FastAPI backend │
-└─────────────┘        └──────┬───────┘        └─────────┬─────────┘
-                               │ JSON/REST                │
-                               ▼                          ▼
-                         React + Vite frontend      Embedding ETL
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Web Scraper   │───▶│   PostgreSQL    │◀───│  FastAPI API    │
+│  (BeautifulSoup)│    │   + pgvector    │    │   + SQLAlchemy  │
+└─────────────────┘    └─────────────────┘    └─────────┬───────┘
+                                                        │
+                       ┌─────────────────┐              │
+                       │  Embedding ETL  │◀──────────────┘
+                       │ (transformers)  │              |
+                       └─────────────────┘              |
+                                                        |   
+                                                        │
+                                                        ▼
+                       ┌─────────────────────────────────────┐
+                       │        React + Vite Frontend        │
+                       │     (Company → Recommendations)     │
+                       └─────────────────────────────────────┘
 ```
 
-## Getting Started
+## Table of Contents
+1. [Prerequisites](#prerequisites)
+2. [Docker Setup on macOS](#docker-setup-on-macos)
+3. [Clone & Environment Setup](#clone--environment-setup)
+4. [Backend Setup (Python + FastAPI)](#backend-setup-python--fastapi)
+5. [Frontend Setup (React + Vite)](#frontend-setup-react--vite)
+6. [Running with Docker Compose](#running-with-docker-compose)
+7. [Scraping & ETL](#scraping--etl)
+8. [API Usage](#api-usage)
+9. [Design Notes](#design-notes)
+10. [Hourly Scraping](#hourly-scraping)
 
-### Prerequisites
+---
 
-- Docker & Docker Compose
-- Python 3.11+
+## Prerequisites
+- Docker with Docker Compose
+- Python 3.11
 - Node 18+
+- Git
 
-### Clone & Setup
+On macOS with Homebrew you can install the tools with:
+```bash
+brew install git
+brew install node       # includes npm
+brew install python@3.11
+```
+Make sure the Docker daemon is running before using `docker-compose`.
+
+---
+
+## Docker Setup on macOS
+Docker Desktop
+
+1. Download Docker Desktop from docker.com
+2. Install the .dmg file by dragging Docker to Applications
+3. Launch Docker Desktop from Applications
+4. Wait for Docker to start (you'll see the whale icon in your menu bar)
+5. Verify installation:
+```bash
+docker-compose --version
+```
+
+---
+
+## Clone & Environment Setup
 ```bash
 git clone https://github.com/vincentlinzhu/sofweek_recommender.git
 cd sofweek_recommender
 cp backend/.env.example backend/.env
-# edit backend/.env to set AGENDA_URL to the real agenda page
 ```
 
-### Run with Docker
+Edit `backend/.env` to set `AGENDA_URL` to the real agenda page. The file also defines the database URL and embedding model.
+
+---
+
+## Backend Setup (Python + FastAPI)
 
 ```bash
-docker-compose up --build
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
+The API will be available on `http://localhost:8000`.
 
-The backend will be available on `http://localhost:8000` and the database on port `5432`.
+---
 
-### Frontend
-
-```
+## Frontend Setup (React + Vite)
+```bash
 cd frontend/confrec
 npm install
 npm run dev
 ```
+The dev server proxies `/recommend`, `/events` and `/speakers` to the backend.
 
-The React app talks to `/recommend`, `/events`, and `/speakers` served by FastAPI.
+---
 
-## Scraper
+## Running with Docker Compose
+```bash
+docker-compose up --build
+```
+This launches PostgreSQL with `pgvector`, the FastAPI backend and the scraper service.
 
-`backend/app/scraper.py` contains a placeholder scraper using `requests` and `BeautifulSoup`. Adjust the CSS selectors to match the real agenda website. Run it hourly via `cron` or a scheduled container to keep the database fresh.
-
-## ETL
-
-After inserting new events or speakers, run:
-
+## Scraping & ETL
+The scraper uses `requests` and `BeautifulSoup` to collect agenda items. Run it manually with:
+```bash
+python -m backend.app.scrape_runner
+```
+(or rely on the Docker `scraper` service). After scraping, generate embeddings:
 ```bash
 python -m backend.app.etl
 ```
 
-This computes embeddings and stores them in the `embeddings` table so the `/recommend` endpoint can perform vector search.
+---
 
-## Recommendation API
-
+## API Usage
 `POST /recommend`
-
 ```json
 {
   "company_description": "Counter UAS technology for the Army",
@@ -78,13 +135,17 @@ This computes embeddings and stores them in the `embeddings` table so the `/reco
 }
 ```
 
-Returns a list of items sorted by vector similarity.
+Returns the most relevant events or speakers ordered by similarity score.
+
+---
 
 ## Design Notes
 
 - Embeddings use 384 dimensions to match the MiniLM model.
 - The `pgvector` extension with the `ivfflat` index provides efficient ANN search.
 - The project is containerised for easy local development.
+
+---
 
 ## Hourly Scraping
 
@@ -97,10 +158,3 @@ scraper:
 ```
 
 This service calls `backend/app/scraper_runner.py` which fetches the agenda and stores new events before updating embeddings.
-You can alternatively schedule `python -m app.scraper_runner` via `cron` if you run outside Docker.
-
-## Next Steps
-
-- Build out real scraper selectors and populate the database.
-- Polish the React UI to display recommended events and speaker bios.
-- Add authentication if needed.

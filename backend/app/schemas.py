@@ -8,7 +8,7 @@ class SpeakerBase(BaseModel):
     biography: str | None = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class EventBase(BaseModel):
     id: int
@@ -19,7 +19,7 @@ class EventBase(BaseModel):
     speakers: List[SpeakerBase] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class Recommendation(BaseModel):
     id: int
