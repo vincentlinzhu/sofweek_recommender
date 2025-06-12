@@ -33,13 +33,14 @@ This project demonstrates a minimal end‑to‑end stack for recommending SOFWEE
 1. [Prerequisites](#prerequisites)
 2. [Docker Setup on macOS](#docker-setup-on-macos)
 3. [Clone & Environment Setup](#clone--environment-setup)
-4. [Backend Setup (Python + FastAPI)](#backend-setup-python--fastapi)
-5. [Frontend Setup (React + Vite)](#frontend-setup-react--vite)
-6. [Running with Docker Compose](#running-with-docker-compose)
-7. [Scraping & ETL](#scraping--etl)
-8. [API Usage](#api-usage)
-9. [Design Notes](#design-notes)
-10. [Hourly Scraping](#hourly-scraping)
+4. [Database Setup](#database-setup)
+5. [Backend Setup (Python + FastAPI)](#backend-setup-python--fastapi)
+6. [Frontend Setup (React + Vite)](#frontend-setup-react--vite)
+7. [Running with Docker Compose](#running-with-docker-compose)
+8. [Scraping & ETL](#scraping--etl)
+9. [API Usage](#api-usage)
+10. [Design Notes](#design-notes)
+11. [Hourly Scraping](#hourly-scraping)
 
 ---
 
@@ -81,6 +82,24 @@ cp backend/.env.example backend/.env
 ```
 
 Edit `backend/.env` to set `AGENDA_URL` to the real agenda page. The file also defines the database URL and embedding model.
+
+---
+
+## Database Setup
+
+Make sure PostgreSQL is running and create the `confrec` database:
+
+```bash
+createdb confrec
+psql -d confrec -f db/init.sql
+```
+
+If using Docker, simply start the database service which automatically runs the
+`init.sql` script:
+
+```bash
+docker-compose up db
+```
 
 ---
 
