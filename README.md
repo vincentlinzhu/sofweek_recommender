@@ -1,76 +1,96 @@
-# Usul: Sofweek Recommender
-
-Problem Statement:
-Defense companies go to conferences like SOFWEEK to attend events and find people they should talk to. Make a supercharged app to recommend events and people to talk to for companies. Scrape the Agenda website for the biographies of the speakers and the events. Given a description of a company, i.e., Counter UAS Companies working for the Army. Recommend events and people that we should talk to. Make a simple frontend to host it all.
-
-My Specifications:
-I want a React + Vite frontend. I want a FastAPI Python backend with a PostgeSQL db for storing and displaying the events and people, as well as a vector database for recommendations. The scraper could use something such as beautifulsoup and requests, and have it hosted and run every hour (please suggest a method). Can you also suggest a recommendation engine from Huggingface, as well as a vectorizer such as word2vec? The recommendation engine should work with a natural language description of the user's preferences and then return the suggestions in a nice frontend.
-
 # Usul: SOFWEEK Conference Recommender
 
-A **supercharged** event-and-speaker recommendation system for defense companies attending SOFWEEK (and similar conferences).  
+This project demonstrates a minimal end‑to‑end stack for recommending SOFWEEK conference events and speakers. A FastAPI backend stores agenda items in PostgreSQL with the `pgvector` extension. Events and speaker biographies are embedded with a sentence‑transformers model and stored as vectors. A simple React + Vite frontend lets users type in a description of their company and receive recommended agenda items.
 
-Built with:
-- **FastAPI** + **PostgreSQL** (+ pgvector) backend  
-- **React** + **Vite** frontend  
-- **BeautifulSoup** & **requests** scraper  
-- **Sentence-Transformers** embedding + pgvector ANN search  
+**Tech Stack**
 
-                         ┌─────────────────────┐
-   Agenda URL(s) ──▶     │  Scraper service    │───►  Raw JSON
-                         │ (requests + BS4)    │
-                         └────────┬────────────┘
-                                  │
-                                  ▼
-                         ┌─────────────────────┐
-                         │  ETL / Embedding    │───►  pgvector
-                         │  (Sentence-TF)      │
- Company free-text ──▶   └────────┬────────────┘
-                                  │
-                                  ▼
-                         ┌─────────────────────┐
-                         │ FastAPI backend     │
-                         │  • /recommend       │
-                         │  • /events          │
-                         │  • /speakers        │
-                         └────────┬────────────┘
-                                  │ JSON/HTTPS
-                                  ▼
-                         ┌─────────────────────┐
-                         │ React + Vite UI     │
-                         └─────────────────────┘
+- **FastAPI** with SQLAlchemy
+- **PostgreSQL** + **pgvector** for vector search
+- **sentence-transformers** (`all-MiniLM-L6-v2`) for embeddings
+- **BeautifulSoup** scraper (placeholder selectors)
+- **React** + **Vite** frontend
 
----
+```
+┌─────────────┐        ┌──────────────┐        ┌───────────────────┐
+│  scraper    │  --->  │   database   │  --->  │   FastAPI backend │
+└─────────────┘        └──────┬───────┘        └─────────┬─────────┘
+                               │ JSON/REST                │
+                               ▼                          ▼
+                         React + Vite frontend      Embedding ETL
+```
 
-## Table of Contents
+## Getting Started
 
-1. [Prerequisites](#prerequisites)  
-2. [Clone & Environment Setup](#clone--environment-setup)  
-3. [Database Initialization](#database-initialization)  
-4. [Scraper: Pull Agenda Data](#scraper-pull-agenda-data)  
-5. [ETL & Embeddings](#etl--embeddings)  
-6. [Backend Setup (FastAPI)](#backend-setup-fastapi)  
-7. [Frontend Setup (React + Vite)](#frontend-setup-react--vite)  
-8. [Docker Compose (Dev)](#docker-compose-dev)  
-9. [Design Decisions](#design-decisions)  
-10. [Next Steps](#next-steps)
+### Prerequisites
 
----
+- Docker & Docker Compose
+- Python 3.11+
+- Node 18+
 
-## Prerequisites
-
-On macOS / Linux:
-
-1. **Docker & Docker Compose**  
-2. **Python 3.11+** & **pip**  
-3. **Node 18+** & **npm**  
-4. (Optional) `psql` client if you prefer manual DB work
-
----
-
-## Clone & Environment Setup
-
+### Clone & Setup
 ```bash
 git clone https://github.com/vincentlinzhu/sofweek_recommender.git
 cd sofweek_recommender
+cp backend/.env.example backend/.env
+```
 
+### Run with Docker
+
+```bash
+docker-compose up --build
+```
+
+The backend will be available on `http://localhost:8000` and the database on port `5432`.
+
+### Frontend
+
+```
+cd frontend/confrec
+npm install
+npm run dev
+```
+
+The React app talks to `/recommend`, `/events`, and `/speakers` served by FastAPI.
+
+## Scraper
+
+`backend/app/scraper.py` contains a placeholder scraper using `requests` and `BeautifulSoup`. Adjust the CSS selectors to match the real agenda website. Run it hourly via `cron` or a scheduled container to keep the database fresh.
+
+## ETL
+
+After inserting new events or speakers, run:
+
+```bash
+python -m backend.app.etl
+```
+
+This computes embeddings and stores them in the `embeddings` table so the `/recommend` endpoint can perform vector search.
+
+## Recommendation API
+
+`POST /recommend`
+
+```json
+{
+  "company_description": "Counter UAS technology for the Army",
+  "k": 5
+}
+```
+
+Returns a list of items sorted by vector similarity.
+
+## Design Notes
+
+- Embeddings use 384 dimensions to match the MiniLM model.
+- The `pgvector` extension with the `ivfflat` index provides efficient ANN search.
+- The project is containerised for easy local development.
+
+## Hourly Scraping
+
+One simple approach is to run the scraper inside a small Docker container with the command scheduled by `cron` (`*/60 * * * *`). Another option is to use a CI/CD pipeline or serverless function triggered hourly.
+
+## Next Steps
+
+- Build out real scraper selectors and populate the database.
+- Polish the React UI to display recommended events and speaker bios.
+- Add authentication if needed.
