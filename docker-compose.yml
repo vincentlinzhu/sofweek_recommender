@@ -22,7 +22,7 @@ services:
 
   scraper:
     build: ./backend
-    command: bash -c "while true; do python -m app.scraper_runner; sleep 3600; done"
+    command: bash -c "while true; do python -m app.scrape_runner; sleep 3600; done"
     env_file: ./backend/.env.example
     depends_on:
       - db

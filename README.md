@@ -182,7 +182,7 @@ The `docker-compose.yml` file includes a `scraper` service that loops every hour
 ```yaml
 scraper:
   build: ./backend
-  command: bash -c "while true; do python -m app.scraper_runner; sleep 3600; done"
+  command: bash -c "while true; do python -m app.scrape_runner; sleep 3600; done"
 ```
 
-This service calls `backend/app/scraper_runner.py` which fetches the agenda and stores new events before updating embeddings.
+This service calls `backend/app/scrape_runner.py` which fetches the agenda and stores new events before updating embeddings.

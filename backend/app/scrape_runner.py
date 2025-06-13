@@ -1,4 +1,5 @@
 import os
+import json
 from .scraper import fetch_agenda
 from .db import SessionLocal, engine, Base
 from .models import Event, Speaker
@@ -12,6 +13,10 @@ def run() -> None:
     try:
         url = os.getenv("AGENDA_URL", "https://example.com")
         events = fetch_agenda(url)
+        json_path = os.getenv("SCRAPE_JSON_PATH")
+        if json_path:
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(events, f, ensure_ascii=False, indent=2)
         for ev in events:
             if not ev.get("title"):
                 continue
