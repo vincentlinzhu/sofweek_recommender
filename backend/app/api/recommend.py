@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from ..db import SessionLocal
-from .. import models, schemas
+from .. import schemas
 from sentence_transformers import SentenceTransformer
 from sqlalchemy import text
 import numpy as np
@@ -16,7 +16,6 @@ class RecQuery(BaseModel):
     company_description: str
     k: int = 5
 
-
 def get_db():
     db = SessionLocal()
     try:
@@ -26,10 +25,19 @@ def get_db():
 
 @router.post('/recommend', response_model=list[schemas.Recommendation])
 def recommend(q: RecQuery, db: Session = Depends(get_db)):
+    # encode to float32 list
     vec = model.encode(q.company_description).astype(np.float32).tolist()
-    sql = text(
-        "SELECT id, type, 1 - (vector <=> :vec) AS score "
-        "FROM embeddings ORDER BY vector <-> :vec LIMIT :k"
-    )
+
+    # use CAST(:vec AS vector) so pgvector operators work
+    sql = text("""
+    SELECT
+      id,
+      type,
+      1 - (vector <=> CAST(:vec AS vector)) AS score
+    FROM embeddings
+    ORDER BY vector <-> CAST(:vec AS vector)
+    LIMIT :k
+    """)
+
     rows = db.execute(sql, {"vec": vec, "k": q.k}).fetchall()
     return [schemas.Recommendation(id=r[0], type=r[1], score=r[2]) for r in rows]
