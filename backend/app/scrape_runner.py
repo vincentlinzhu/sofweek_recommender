@@ -23,7 +23,7 @@ def run() -> None:
             starts_at = ev.get("starts_at")
             if isinstance(starts_at, str):
                 try:
-                    starts_at = datetime.fromisoformat(starts_at)
+                    starts_at = datetime.datetime.fromisoformat(starts_at)
                 except Exception:
                     starts_at = None
             existing.starts_at = starts_at

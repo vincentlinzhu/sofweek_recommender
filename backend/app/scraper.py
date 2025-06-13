@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 
@@ -48,7 +47,6 @@ def _parse_ldjson(soup: BeautifulSoup) -> list[dict]:
 
 def fetch_agenda(url: str) -> list[dict]:
     """Fetch and parse agenda information from the provided URL."""
-    resp = requests.get(url)
     headers = {"User-Agent": "Mozilla/5.0"}
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()

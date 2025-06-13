@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from ..db import SessionLocal
-from .. import schemas
+from .. import schemas, models
 from sentence_transformers import SentenceTransformer
 from sqlalchemy import text
 import numpy as np
@@ -40,4 +40,18 @@ def recommend(q: RecQuery, db: Session = Depends(get_db)):
     """)
 
     rows = db.execute(sql, {"vec": vec, "k": q.k}).fetchall()
-    return [schemas.Recommendation(id=r[0], type=r[1], score=r[2]) for r in rows]
+    results = []
+    for rid, rtype, score in rows:
+        text_val = None
+        if rtype == "event":
+            ev = db.query(models.Event).filter_by(id=rid).first()
+            if ev:
+                text_val = ev.title
+        else:
+            sp = db.query(models.Speaker).filter_by(id=rid).first()
+            if sp:
+                text_val = sp.name
+        results.append(
+            schemas.Recommendation(id=rid, type=rtype, score=score, text=text_val)
+        )
+    return results

@@ -22,7 +22,9 @@ function App() {
       <button onClick={fetchRecs}>Recommend</button>
       <ul>
         {results.map(r => (
-          <li key={r.type + r.id}>{r.type} {r.id} (score {r.score.toFixed(3)})</li>
+          <li key={r.type + r.id}>
+            {r.type}: {r.text || r.id} (score {r.score.toFixed(3)})
+          </li>
         ))}
       </ul>
     </div>

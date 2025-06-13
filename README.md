@@ -162,6 +162,8 @@ python -m backend.app.etl
 ```
 
 Returns the most relevant events or speakers ordered by similarity score.
+Each item includes a `text` field with the event title or speaker name for easy display on the frontend.
+
 
 ---
 
